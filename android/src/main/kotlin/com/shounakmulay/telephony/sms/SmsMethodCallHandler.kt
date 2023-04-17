@@ -154,6 +154,7 @@ class SmsMethodCallHandler(
    * #####
    */
   private fun execute(smsAction: SmsAction) {
+    if(permissionsController.isRequestingPermission){
     try {
       when (smsAction.toActionType()) {
         ActionType.GET_SMS -> handleGetSmsActions(smsAction)
@@ -167,6 +168,7 @@ class SmsMethodCallHandler(
       result.error(ILLEGAL_ARGUMENT, WRONG_METHOD_TYPE, null)
     } catch (e: RuntimeException) {
       result.error(FAILED_FETCH, e.message, null)
+    }
     }
   }
 
@@ -356,8 +358,9 @@ class SmsMethodCallHandler(
 
   override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray): Boolean {
 
-    if(permissionsController.isRequestingPermission)    {
-            val deniedPermissions = mutableListOf<String>()
+    permissionsController.isRequestingPermission = false
+
+    val deniedPermissions = mutableListOf<String>()
     if (requestCode != this.requestCode && !this::action.isInitialized) {
       return false
     }
@@ -376,13 +379,13 @@ class SmsMethodCallHandler(
       onPermissionDenied(deniedPermissions)
       false
     }
-    }
-
-
   }
 
   private fun onPermissionDenied(deniedPermissions: List<String>) {
+    if(permissionsController.isRequestingPermission){
     result.error(PERMISSION_DENIED, PERMISSION_DENIED_MESSAGE, deniedPermissions)
+
+    }
   }
 
   fun setForegroundChannel(channel: MethodChannel) {
